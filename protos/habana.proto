@@ -1,0 +1,76 @@
+// Copyright 2015 gRPC authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package habana;
+
+// Interface exported by the server.
+service HostEngine {
+  // A simple RPC.
+  //
+  // Obtains the feature at a given position.
+  //
+  // A feature with an empty name is returned if there's no feature at the given
+  // position.
+  rpc GetDriverVer(AIP) returns (DriverVersion) {}
+
+  // A server-to-client streaming RPC.
+  //
+  // Obtains the Features available within the given Rectangle.  Results are
+  // streamed rather than returned at once (e.g. in a response message with a
+  // repeated field), as the rectangle may cover a large area and contain a
+  // huge number of features.
+  rpc ListPCI(AIP) returns (PCIeInfo) {}
+
+  rpc ListMACaddress(AIP) returns (stream MACaddress) {}
+
+  // A client-to-server streaming RPC.
+  //
+  // Accepts a stream of AIPs on a route being traversed, returning a
+  // RouteSummary when traversal is completed.
+  //rpc RecordRoute(stream AIP) returns (RouteSummary) {}
+
+  // A Bidirectional streaming RPC.
+  //
+  // Accepts a stream of RouteNotes sent while a route is being traversed,
+  // while receiving other RouteNotes (e.g. from other users).
+  //rpc RouteChat(stream RouteNote) returns (stream RouteNote) {}
+}
+
+// AIPs are represented as latitude-longitude pairs in the E7 representation
+// (degrees multiplied by 10**7 and rounded to the nearest integer).
+// Latitudes should be in the range +/- 90 degrees and longitude should be in
+// the range +/- 180 degrees (inclusive).
+message AIP {
+  string HLnumber = 1;
+}
+
+// A latitude-longitude rectangle, represented as two diagonally opposite
+// points "lo" and "hi".
+message DriverVersion{
+   string DriverVersion = 1;
+}
+
+message PCIeInfo{
+   int32 Bus = 1;
+   int32 Device = 2;
+   int32 Domain = 3;
+   string DeviceId = 4;
+}
+
+message MACaddress {
+  string mAddress = 1;
+}
+
