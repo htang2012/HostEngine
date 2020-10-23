@@ -1,33 +1,44 @@
-# Project
-project(HabanaLabsHostEngine)
-# Minimum CMake required
 cmake_minimum_required(VERSION 3.14.4)
-add_compile_options(-std=c++11)
-find_program(GRPC_CPP_PLUGIN_EXECUTABLE grpc_cpp_plugin)
-get_filename_component(HABANA_PROTO "protos/habana.proto" ABSOLUTE)
-get_filename_component(HABANA_PROTO_PATH "${HABANA_PROTO}" PATH)
-set(HABANA_GRPC_SRCS "${CMAKE_CURRENT_BINARY_DIR}/habana.grpc.pb.cc")
-set(HABANA_GRPC_HEADS "${CMAKE_CURRENT_BINARY_DIR}/habana.grpc.pb.h")
-set(HABANA_PROTOBUF_SRCS "${CMAKE_CURRENT_BINARY_DIR}/habana.pb.cc")
-set(HABANA_PROTOBUF_HEADS "${CMAKE_CURRENT_BINARY_DIR}/habana.pb.h")
-set(PROTOC protoc)
-set(GRPC_CPP_PLUGIN_PATH "which ${GRPC_CPP_PLUGIN}")
+project(HabanaLabs_HPU)
 
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Protobuf REQUIRED)
+find_package(Threads REQUIRED)
+find_package(gRPC CONFIG REQUIRED)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+include_directories(/usr/local/include)
+link_directories(/usr/local/lib)
+
+set(PROTO_PATH "${CMAKE_SOURCE_DIR}/protos")
+set(HABANA_PROTO "${PROTO_PATH}/habana.proto")
+set(GENERATED_PROTOBUF_PATH "${CMAKE_BINARY_DIR}/generated")
+file(MAKE_DIRECTORY ${GENERATED_PROTOBUF_PATH})
+
+set(HABANA_PB_CPP_FILE "${GENERATED_PROTOBUF_PATH}/habana.pb.cc")
+set(HABANA_PB_H_FILE "${GENERATED_PROTOBUF_PATH}/habana.pb.h")
+set(HABANA_GRPC_PB_CPP_FILE "${GENERATED_PROTOBUF_PATH}/habana.grpc.pb.cc")
+set(HABANA_GRPC_PB_H_FILE "${GENERATED_PROTOBUF_PATH}/habana.grpc.pb.h")
 add_custom_command(
-    OUTPUT "${HABANA_GRPC_SRCS}" "${HABANA_GRPC_HEADS}" "${HABANA_PROTOBUF_SRCS}" "${HABANA_PROTOBUF_HEADS}"
-    COMMAND ${PROTOC}
-    ARGS  --grpc_out="${CMAKE_CURRENT_BINARY_DIR}"
-    --cpp_out="${CMAKE_CURRENT_BINARY_DIR}"
-    -I "${HABANA_PROTO_PATH}"
-    --plugin=protoc-gen-grpc="${GRPC_CPP_PLUGIN_EXECUTABLE}"
-    "${HABANA_PROTO}" 
-    DEPENDS "${HABANA_PROTO}" )
+    OUTPUT "${HABANA_PB_H_FILE}"
+           "${HABANA_PB_CPP_FILE}"
+           "${HABANA_GRPC_PB_H_FILE}"
+           "${HABANA_GRPC_PB_CPP_FILE}"
+    COMMAND ${PROTOBUF_PROTOC_EXECUTABLE}
+    ARGS "--proto_path=${PROTO_PATH}"
+         "--cpp_out=${GENERATED_PROTOBUF_PATH}"
+         "${HABANA_PROTO}"
+    COMMAND ${PROTOBUF_PROTOC_EXECUTABLE}
+    ARGS "--proto_path=${PROTO_PATH}"
+         "--grpc_out=${GENERATED_PROTOBUF_PATH}"
+         "--plugin=protoc-gen-grpc=/usr/local/bin/grpc_cpp_plugin"
+         "${HABANA_PROTO}"
+    )
+set(GENERATED_PROTOBUF_FILES ${HABANA_PB_H_FILE} ${HABANA_PB_CPP_FILE}
+    ${HABANA_GRPC_PB_H_FILE} ${HABANA_GRPC_PB_CPP_FILE})
 
-include_directories("${CMAKE_CURRENT_BINARY_DIR}")
+include_directories(${GENERATED_PROTOBUF_PATH})
+link_libraries(gRPC::grpc++_reflection grpc++  ${PROTOBUF_LIBRARY})
 
-foreach(target HPUclient HPUserver )
-   add_executable(${target} "${CMAKE_CURRENT_SOURCE_DIR}/src/${target}.cpp" ${HABANA_GRPC_SRCS} ${HABANA_GRPC_HEADS})
-   target_link_libraries(${target} )
-endforeach()
-
-
+add_executable(HPUserver ${CMAKE_CURRENT_SOURCE_DIR}/src/HPUserver.cpp ${GENERATED_PROTOBUF_FILES})
+add_executable(HPUclient ${CMAKE_CURRENT_SOURCE_DIR}/src/HPUclient.cpp ${GENERATED_PROTOBUF_FILES})
