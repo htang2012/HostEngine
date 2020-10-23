@@ -22,7 +22,7 @@
 #include <random>
 #include <string>
 #include <thread>
-
+#include <unistd.h>
 #include <grpc/grpc.h>
 #include <grpcpp/channel.h>
 #include <grpcpp/client_context.h>
@@ -92,8 +92,11 @@ int main(int argc, char** argv) {
                         grpc::InsecureChannelCredentials()));
 
   std::cout << "-------------- GetDriverVer --------------" << std::endl;
+  while(1) {
   Host.GetDriverVer("hl1");
   Host.ListPCI("hl1");
+  usleep(10000);
+  }
   return 0;
 }
 
