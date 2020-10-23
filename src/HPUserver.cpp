@@ -62,7 +62,7 @@ class HostEngineImpl final : public HostEngine::Service {
      pciinfo->set_bus(0);
      pciinfo->set_device(10);
      pciinfo->set_domain(20);
-     pciinfo->set_deviceid("this is device id");
+     pciinfo->set_deviceid(" Device Id is: 0x00ff000");
      return Status::OK;
      }
 };
