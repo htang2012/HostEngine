@@ -1,0 +1,1 @@
+/usr/bin/c++  -std=c++11 CMakeFiles/HPUclient.dir/src/HPUclient.cpp.o CMakeFiles/HPUclient.dir/generated/habana.pb.cc.o CMakeFiles/HPUclient.dir/generated/habana.grpc.pb.cc.o -o HPUclient   -L/usr/local/lib  -Wl,-rpath,/usr/local/lib -lgrpc++_reflection -lgrpc++ /usr/local/lib/libprotobuf.a 
