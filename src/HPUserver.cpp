@@ -49,6 +49,18 @@ class HostEngineImpl final : public HostEngine::Service {
  public:
     explicit HostEngineImpl(const std::string &name) {
 	    std::cout << "habana::HostEngine Service begins." <<name << std::endl;
+      MACaddress_list_.clear();
+      InitMacList(MACaddress_list_);
+  }
+
+  void InitMacList(std::vector<MACaddress> & Macaddress_list_)
+  {
+      Macaddress_list_.clear();
+      for ( int i = 0; i< 10; i++) {
+          Macaddress_list_.push_back(MACaddress());
+          std::string str  = "Mac Address " + std::to_string(i);
+          Macaddress_list_.back().set_maddress(str.c_str());  
+      }
   }
 
   Status GetDriverVer(ServerContext* context, const AIP* chipaip,
@@ -65,6 +77,19 @@ class HostEngineImpl final : public HostEngine::Service {
      pciinfo->set_deviceid("this is device id");
      return Status::OK;
      }
+
+ Status ListMACaddress(ServerContext *context, const AIP *chipaip,
+		 ServerWriter<MACaddress>* writer) override {
+    for (const MACaddress &m: MACaddress_list_) {
+      writer->Write(m);
+    }  
+	 return Status::OK;
+ }
+
+private:
+   std::vector<MACaddress> MACaddress_list_;
+
+
 };
 
 

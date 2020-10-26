@@ -82,6 +82,30 @@ class HostEngineClient {
 
   }
 
+  bool ListMACaddress(const std::string HLnumber)
+  {
+      ClientContext context;
+      AIP request;
+      MACaddress macs;
+      request.set_hlnumber(HLnumber);
+      std::unique_ptr<ClientReader<MACaddress> > reader(
+          stub_->ListMACaddress(&context, request));
+      while (reader->Read(&macs)) {
+      std::cout << "Found MACaddress called at:"
+                << macs.maddress()<< std::endl;
+
+      }
+    Status status = reader->Finish();
+    if (status.ok()) {
+      std::cout << "ListMacaddress rpc succeeded." << std::endl;
+    } else {
+      std::cout << "ListMacaddress rpc failed." << std::endl;
+    }
+      
+
+  }
+
+
   std::unique_ptr<HostEngine::Stub> stub_;
 };
 
@@ -92,11 +116,12 @@ int main(int argc, char** argv) {
                         grpc::InsecureChannelCredentials()));
 
   std::cout << "-------------- GetDriverVer --------------" << std::endl;
-  while(1) {
+
   Host.GetDriverVer("hl1");
   Host.ListPCI("hl1");
+  Host.ListMACaddress("hl1");
   usleep(10000);
-  }
+  
   return 0;
 }
 
