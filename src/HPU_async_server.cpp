@@ -16,225 +16,160 @@
  *
  */
 
-#include <algorithm>
-#include <chrono>
-#include <cmath>
-#include <iostream>
 #include <memory>
+#include <iostream>
 #include <string>
+#include <thread>
 
-#include <grpc/grpc.h>
-#include <grpcpp/server.h>
-#include <grpcpp/server_builder.h>
-#include <grpcpp/server_context.h>
-#include <grpcpp/security/server_credentials.h>
+#include <grpcpp/grpcpp.h>
+#include <grpc/support/log.h>
+
+#ifdef BAZEL_BUILD
+#include "examples/protos/helloworld.grpc.pb.h"
+#else
 #include "habana.grpc.pb.h"
+#endif
 
 using grpc::Server;
+using grpc::ServerAsyncResponseWriter;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
-using grpc::ServerReader;
-using grpc::ServerReaderWriter;
-using grpc::ServerWriter;
+using grpc::ServerCompletionQueue;
 using grpc::Status;
 using habana::AIP;
 using habana::DriverVersion;
 using habana::PCIeInfo;
 using habana::MACaddress;
 using habana::HostEngine;
-using std::chrono::system_clock;
 
-
-class HostEngineImpl final : public HostEngine::Service {
+class ServerImpl final {
  public:
-    explicit HostEngineImpl(const std::string &name) {
-	    std::cout << "habana::HostEngine Service begins." <<name << std::endl;
-      MACaddress_list_.clear();
-      InitMacList(MACaddress_list_);
+  ~ServerImpl() {
+    server_->Shutdown();
+    // Always shutdown the completion queue after the server.
+    cq_->Shutdown();
   }
 
-  void InitMacList(std::vector<MACaddress> & Macaddress_list_)
-  {
-      Macaddress_list_.clear();
-      for ( int i = 0; i< 10; i++) {
-          Macaddress_list_.push_back(MACaddress());
-          std::string str  = "Mac Address " + std::to_string(i);
-          Macaddress_list_.back().set_maddress(str.c_str());  
-      }
-  }
+  // There is no shutdown handling in this code.
+  void Run() {
+    std::string server_address("0.0.0.0:50051");
 
-  Status GetDriverVer(ServerContext* context, const AIP* chipaip,
-                    DriverVersion* driverver) override {
-    driverver->set_driverversion("driver version. 0.1");
-    return Status::OK;
-  }
+    ServerBuilder builder;
+    // Listen on the given address without any authentication mechanism.
+    builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
+    // Register "service_" as the instance through which we'll communicate with
+    // clients. In this case it corresponds to an *asynchronous* service.
+    builder.RegisterService(&service_);
+    // Get hold of the completion queue used for the asynchronous communication
+    // with the gRPC runtime.
+    cq_ = builder.AddCompletionQueue();
+    // Finally assemble the server.
+    server_ = builder.BuildAndStart();
+    std::cout << "Server listening on " << server_address << std::endl;
 
- Status ListPCI(ServerContext *context, const AIP * chipaip,
-		PCIeInfo *pciinfo) override {
-     pciinfo->set_bus(0);
-     pciinfo->set_device(10);
-     pciinfo->set_domain(20);
-     pciinfo->set_deviceid(" Device Id is: 0x00ff000");
-     return Status::OK;
-     }
-
- Status ListMACaddress(ServerContext *context, const AIP *chipaip,
-		 ServerWriter<MACaddress>* writer) override {
-    for (const MACaddress &m: MACaddress_list_) {
-      writer->Write(m);
-    }  
-	 return Status::OK;
- }
-
-private:
-   std::vector<MACaddress> MACaddress_list_;
-
-
-};
-
-
-void RunServer(const std::string& servername) {
-  std::string server_address("0.0.0.0:50051");
-  HostEngineImpl service(servername);
-
-  ServerBuilder builder;
-  builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
-  builder.RegisterService(&service);
-  std::unique_ptr<Server> server(builder.BuildAndStart());
-  std::cout << "Server listening on " << server_address << std::endl;
-  server->Wait();
-}
-
-int main(int argc, char** argv) {
-  RunServer("Habana server");
-  return 0;
-}
-
-
-
-#if 0
-
-
-float ConvertToRadians(float num) {
-  return num * 3.1415926 /180;
-
-
-// The formula is based on http://mathforum.org/library/drmath/view/51879.html
-float GetDistance(const Point& start, const Point& end) {
-  const float kCoordFactor = 10000000.0;
-  float lat_1 = start.latitude() / kCoordFactor;
-  float lat_2 = end.latitude() / kCoordFactor;
-  float lon_1 = start.longitude() / kCoordFactor;
-  float lon_2 = end.longitude() / kCoordFactor;
-  float lat_rad_1 = ConvertToRadians(lat_1);
-  float lat_rad_2 = ConvertToRadians(lat_2);
-  float delta_lat_rad = ConvertToRadians(lat_2-lat_1);
-  float delta_lon_rad = ConvertToRadians(lon_2-lon_1);
-
-  float a = pow(sin(delta_lat_rad/2), 2) + cos(lat_rad_1) * cos(lat_rad_2) *
-            pow(sin(delta_lon_rad/2), 2);
-  float c = 2 * atan2(sqrt(a), sqrt(1-a));
-  int R = 6371000; // metres
-
-  return R * c;
-}
-
-std::string GetFeatureName(const Point& point,
-                           const std::vector<Feature>& feature_list) {
-  for (const Feature& f : feature_list) {
-    if (f.location().latitude() == point.latitude() &&
-        f.location().longitude() == point.longitude()) {
-      return f.name();
-    }
-  }
-  return "";
-}
-
-class HostEngineImpl final : public HostEngine::Service {
- public:
-  explicit HostEngineImpl(const std::string& db) {
-    habana::ParseDb(db, &feature_list_);
-  }
-
-  Status GetFeature(ServerContext* context, const Point* point,
-                    Feature* feature) override {
-    feature->set_name(GetFeatureName(*point, feature_list_));
-    feature->mutable_location()->CopyFrom(*point);
-    return Status::OK;
-  }
-
-  Status ListFeatures(ServerContext* context,
-                      const habana::Rectangle* rectangle,
-                      ServerWriter<Feature>* writer) override {
-    auto lo = rectangle->lo();
-    auto hi = rectangle->hi();
-    long left = (std::min)(lo.longitude(), hi.longitude());
-    long right = (std::max)(lo.longitude(), hi.longitude());
-    long top = (std::max)(lo.latitude(), hi.latitude());
-    long bottom = (std::min)(lo.latitude(), hi.latitude());
-    for (const Feature& f : feature_list_) {
-      if (f.location().longitude() >= left &&
-          f.location().longitude() <= right &&
-          f.location().latitude() >= bottom &&
-          f.location().latitude() <= top) {
-        writer->Write(f);
-      }
-    }
-    return Status::OK;
-  }
-
-  Status RecordRoute(ServerContext* context, ServerReader<Point>* reader,
-                     RouteSummary* summary) override {
-    Point point;
-    int point_count = 0;
-    int feature_count = 0;
-    float distance = 0.0;
-    Point previous;
-
-    system_clock::time_point start_time = system_clock::now();
-    while (reader->Read(&point)) {
-      point_count++;
-      if (!GetFeatureName(point, feature_list_).empty()) {
-        feature_count++;
-      }
-      if (point_count != 1) {
-        distance += GetDistance(previous, point);
-      }
-      previous = point;
-    }
-    system_clock::time_point end_time = system_clock::now();
-    summary->set_point_count(point_count);
-    summary->set_feature_count(feature_count);
-    summary->set_distance(static_cast<long>(distance));
-    auto secs = std::chrono::duration_cast<std::chrono::seconds>(
-        end_time - start_time);
-    summary->set_elapsed_time(secs.count());
-
-    return Status::OK;
-  }
-
-  Status RouteChat(ServerContext* context,
-                   ServerReaderWriter<RouteNote, RouteNote>* stream) override {
-    RouteNote note;
-    while (stream->Read(&note)) {
-      std::unique_lock<std::mutex> lock(mu_);
-      for (const RouteNote& n : received_notes_) {
-        if (n.location().latitude() == note.location().latitude() &&
-            n.location().longitude() == note.location().longitude()) {
-          stream->Write(n);
-        }
-      }
-      received_notes_.push_back(note);
-    }
-
-    return Status::OK;
+    // Proceed to the server's main loop.
+    HandleRpcs();
   }
 
  private:
-  std::vector<Feature> feature_list_;
-  std::mutex mu_;
-  std::vector<RouteNote> received_notes_;
+  // Class encompasing the state and logic needed to serve a request.
+  class CallData {
+   public:
+    // Take in the "service" instance (in this case representing an asynchronous
+    // server) and the completion queue "cq" used for asynchronous communication
+    // with the gRPC runtime.
+    CallData(HostEngine::AsyncService* service, ServerCompletionQueue* cq)
+        : service_(service), cq_(cq), responder_(&ctx_), status_(CREATE) {
+      // Invoke the serving logic right away.
+      Proceed();
+    }
+
+    void Proceed() {
+      if (status_ == CREATE) {
+        // Make this instance progress to the PROCESS state.
+        status_ = PROCESS;
+
+        // As part of the initial CREATE state, we *request* that the system
+        // start processing SayHello requests. In this request, "this" acts are
+        // the tag uniquely identifying the request (so that different CallData
+        // instances can serve different requests concurrently), in this case
+        // the memory address of this CallData instance.
+        service_->ListPCI(&ctx_, &request_, &responder_, cq_, cq_,
+                                  this);
+      } else if (status_ == PROCESS) {
+        // Spawn a new CallData instance to serve new clients while we process
+        // the one for this CallData. The instance will deallocate itself as
+        // part of its FINISH state.
+        new CallData(service_, cq_);
+
+        // The actual processing.
+        reply_.set_bus(0);
+        reply_.set_device(10);
+        reply_.set_domain(20);
+        reply_.set_deviceid(" Device Id is: 0x00ff000");
+
+        // And we are done! Let the gRPC runtime know we've finished, using the
+        // memory address of this instance as the uniquely identifying tag for
+        // the event.
+        status_ = FINISH;
+        responder_.Finish(reply_, Status::OK, this);
+      } else {
+        GPR_ASSERT(status_ == FINISH);
+        // Once in the FINISH state, deallocate ourselves (CallData).
+        delete this;
+      }
+    }
+
+   private:
+    // The means of communication with the gRPC runtime for an asynchronous
+    // server.
+    HostEngine::AsyncService* service_;
+    // The producer-consumer queue where for asynchronous server notifications.
+    ServerCompletionQueue* cq_;
+    // Context for the rpc, allowing to tweak aspects of it such as the use
+    // of compression, authentication, as well as to send metadata back to the
+    // client.
+    ServerContext ctx_;
+
+    // What we get from the client.
+    AIP request_;
+    // What we send back to the client.
+    PCIeInfo reply_;
+
+    // The means to get back to the client.
+    ServerAsyncResponseWriter<PCIeInfo> responder_;
+
+    // Let's implement a tiny state machine with the following states.
+    enum CallStatus { CREATE, PROCESS, FINISH };
+    CallStatus status_;  // The current serving state.
+  };
+
+  // This can be run in multiple threads if needed.
+  void HandleRpcs() {
+    // Spawn a new CallData instance to serve new clients.
+    new CallData(&service_, cq_.get());
+    void* tag;  // uniquely identifies a request.
+    bool ok;
+    while (true) {
+      // Block waiting to read the next event from the completion queue. The
+      // event is uniquely identified by its tag, which in this case is the
+      // memory address of a CallData instance.
+      // The return value of Next should always be checked. This return value
+      // tells us whether there is any kind of event or cq_ is shutting down.
+      GPR_ASSERT(cq_->Next(&tag, &ok));
+      GPR_ASSERT(ok);
+      static_cast<CallData*>(tag)->Proceed();
+    }
+  }
+
+  std::unique_ptr<ServerCompletionQueue> cq_;
+  HostEngine::AsyncService service_;
+  std::unique_ptr<Server> server_;
 };
 
-#endif
+int main(int argc, char** argv) {
+  ServerImpl server;
+  server.Run();
 
+  return 0;
+}

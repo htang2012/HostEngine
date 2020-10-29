@@ -62,13 +62,14 @@ class HostEngineImpl final : public HostEngine::Service {
           Macaddress_list_.back().set_maddress(str.c_str());  
       }
   }
-
+#if 0
   Status GetDriverVer(ServerContext* context, const AIP* chipaip,
                     DriverVersion* driverver) override {
     driverver->set_driverversion("driver version. 0.1");
     return Status::OK;
   }
-
+#endif
+  
  Status ListPCI(ServerContext *context, const AIP * chipaip,
 		PCIeInfo *pciinfo) override {
      pciinfo->set_bus(0);

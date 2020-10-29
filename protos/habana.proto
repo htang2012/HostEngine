@@ -24,7 +24,7 @@ service HostEngine {
   //
   // A feature with an empty name is returned if there's no feature at the given
   // position.
-  rpc GetDriverVer(AIP) returns (DriverVersion) {}
+  //  rpc GetDriverVer(AIP) returns (DriverVersion) {}
 
   // A server-to-client streaming RPC.
   //
