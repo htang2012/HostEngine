@@ -1,4 +1,7 @@
 {
     "C_Cpp.default.configurationProvider": "go2sh.cmake-integration",
-    "git.ignoreLimitWarning": true
+    "git.ignoreLimitWarning": true,
+    "files.associations": {
+        "__memory": "cpp"
+    }
 }

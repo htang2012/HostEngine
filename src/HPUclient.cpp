@@ -48,6 +48,7 @@ class HostEngineClient {
   HostEngineClient(std::shared_ptr<Channel> channel)
       : stub_(HostEngine::NewStub(channel)) {
   }
+#if 0
   bool GetDriverVer( const std::string & HLnumber) {
     ClientContext context;
     AIP request;
@@ -61,6 +62,7 @@ class HostEngineClient {
     std::cout << "Found GetDriverVersion called " << drvver.driverversion()<< std::endl;
     return true;
   }
+#endif
 
   bool ListPCI(const std::string HLnumber)
   {
@@ -117,7 +119,7 @@ int main(int argc, char** argv) {
 
   std::cout << "-------------- GetDriverVer --------------" << std::endl;
 
-  Host.GetDriverVer("hl1");
+//  Host.GetDriverVer("hl1");
   Host.ListPCI("hl1");
   Host.ListMACaddress("hl1");
   usleep(10000);
