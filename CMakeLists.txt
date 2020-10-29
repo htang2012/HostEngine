@@ -49,7 +49,7 @@ set(GENERATED_PROTOBUF_FILES ${HABANA_PB_H_FILE} ${HABANA_PB_CPP_FILE}
     ${HABANA_GRPC_PB_H_FILE} ${HABANA_GRPC_PB_CPP_FILE})
 
 include_directories(${GENERATED_PROTOBUF_PATH})
-foreach(target HPUclient HPUserver)
+foreach(target HPUclient HPUserver HPU_async_server)
     add_executable(${target} ${CMAKE_CURRENT_SOURCE_DIR}/src/${target}.cpp ${GENERATED_PROTOBUF_FILES})
     target_link_libraries(${target} ${GRPC_REFLECTION} grpc++  ${PROTOBUF_LIBRARY})
 endforeach()
