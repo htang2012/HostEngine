@@ -40,7 +40,7 @@ service HostEngine {
   //
   // Accepts a stream of AIPs on a route being traversed, returning a
   // RouteSummary when traversal is completed.
-  //rpc RecordRoute(stream AIP) returns (RouteSummary) {}
+  //rpc PutAIPs(stream AIP) returns (RouteSummary) {}
 
   // A Bidirectional streaming RPC.
   //
@@ -57,8 +57,6 @@ message AIP {
   string HLnumber = 1;
 }
 
-// A latitude-longitude rectangle, represented as two diagonally opposite
-// points "lo" and "hi".
 message DriverVersion{
    string DriverVersion = 1;
 }
