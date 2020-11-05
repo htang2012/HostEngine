@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14.0)
-project(PB)
+project(habanapb)
 
 include(FindProtobuf)
 find_package(Protobuf REQUIRED)
@@ -34,7 +34,8 @@ add_custom_command(
 set(GENERATED_PROTOBUF_FILES ${HABANA_PB_H_FILE} ${HABANA_PB_CPP_FILE} 
     ${HABANA_GRPC_PB_H_FILE} ${HABANA_GRPC_PB_CPP_FILE}) 
 
-add_library(protolib SHARED ${GENERATED_PROTOBUF_FILES})
-add_library(protolibStatic STATIC ${GENERATED_PROTOBUF_FILES})
+add_library(${PROJECT_NAME} SHARED ${GENERATED_PROTOBUF_FILES})
+
+#add_library(protolibStatic STATIC ${GENERATED_PROTOBUF_FILES})
 
 
