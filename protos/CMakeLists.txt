@@ -30,11 +30,16 @@ add_custom_command(
          "--plugin=protoc-gen-grpc=/usr/local/bin/grpc_cpp_plugin" 
          "${HABANA_PROTO}" 
     ) 
+
+SET(${PROJECT_NAME}_PATH_INSTALL "~/HostEngine"   CACHE PATH "This directory contains installation Path")
  
 set(GENERATED_PROTOBUF_FILES ${HABANA_PB_H_FILE} ${HABANA_PB_CPP_FILE} 
     ${HABANA_GRPC_PB_H_FILE} ${HABANA_GRPC_PB_CPP_FILE}) 
 
 add_library(${PROJECT_NAME} SHARED ${GENERATED_PROTOBUF_FILES})
+
+install(TARGETS ${PROJECT_NAME}
+	DESTINATION "${${PROJECT_NAME}_PATH_INSTALL}/lib/")
 
 #add_library(protolibStatic STATIC ${GENERATED_PROTOBUF_FILES})
 

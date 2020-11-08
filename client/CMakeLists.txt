@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14.4)
-project(HabanaLabs_HPUclient)
+project(HabanaLabs_HPUClient)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Protobuf REQUIRED)
@@ -32,4 +32,12 @@ include_directories(${GENERATED_PROTOBUF_PATH})
 set(target HPUclient)
 add_executable(${target} ${CMAKE_CURRENT_SOURCE_DIR}/${target}.cpp)
 target_link_libraries(${target} ${GRPC_REFLECTION} grpc++  ${GENERATED_PROTOBUF_LIB})
+SET(INSTALL_PATH_INSTALL "~/HostEngine"   CACHE PATH "This directory contains installation Path")
+install(TARGETS ${target} 
+	ARCHIVE DESTINATION "${INSTALL_PATH_INSTALL}/lib/"
+	LIBRARY DESTINATION "${INSTALL_PATH_INSTALL}/lib/"
+	RUNTIME DESTINATION "${INSTALL_PATH_INSTALL}/lib/"
+	INCLUDES DESTINATION "${INSTALL_PATH_INSTALL}/include/")
+
+
 #endforeach()
