@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.14.0)
 project(Habana_HE VERSION 0.1.0)
 SET(${PROJ_NAME}_PATH_INSTALL "~/HostEngine"   CACHE PATH "This directory contains installation Path")
+include_directories(/include)
+link_directories(/lib)
 add_subdirectory(protos)
 add_subdirectory(client)
 add_subdirectory(server)
