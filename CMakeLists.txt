@@ -14,4 +14,3 @@ add_subdirectory(server)
 install(TARGETS ${PROJ_NAME} 
 	ARCHIVE DESTINATION "${${PROJ_NAME}}/lib"
 	ARCHIVE DESTINATION "${${PROJ_NAME}}/exe")
-
