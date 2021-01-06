@@ -10,6 +10,7 @@ SET(${PROJ_NAME}_PATH_INSTALL "~/HostEngine"   CACHE PATH "This directory contai
 add_subdirectory(protos)
 add_subdirectory(client)
 add_subdirectory(server)
+add_subdirectory(asyncclient)
 
 install(TARGETS ${PROJ_NAME} 
 	ARCHIVE DESTINATION "${${PROJ_NAME}}/lib"

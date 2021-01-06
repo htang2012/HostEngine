@@ -41,12 +41,10 @@ add_custom_command(
     COMMAND ${PROTOBUF_PROTOC_EXECUTABLE} 
     ARGS "--proto_path=${PROTO_PATH}" 
          "--cpp_out=${GENERATED_PROTOBUF_PATH}" 
-         "${HABANA_PROTO}" 
-    COMMAND ${PROTOBUF_PROTOC_EXECUTABLE} 
-    ARGS "--proto_path=${PROTO_PATH}" 
          "--grpc_out=${GENERATED_PROTOBUF_PATH}" 
          "--plugin=protoc-gen-grpc=/usr/local/bin/grpc_cpp_plugin" 
          "${HABANA_PROTO}" 
+    DEPENDS "${HABANA_PROTO}"
     ) 
 
 include_directories("/home/ytang/.local/include")
