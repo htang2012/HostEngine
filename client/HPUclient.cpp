@@ -102,7 +102,7 @@ class HostEngineClient {
       std::cout << "ListMacaddress rpc failed." << std::endl;
     }
       
-
+    return true;
   }
 
 
